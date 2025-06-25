@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>أرابيــــكا كافي</title>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { direction: rtl; }
+    .nav-tabs { margin-bottom: 20px; }
+    .product-card { 
+      width: 100%; 
+      max-width: 200px; 
+      border: 1px solid #8b8a8a; 
+      border-radius: 5px; 
+      margin: 10px; 
+      padding: 10px; 
+      cursor: pointer; 
+      text-align: center;
+      transition: box-shadow 0.3s ease;
+    }
+    .product-card:hover { box-shadow: 0 0 10px rgba(0,0,0,0.2); }
+    .product-card img { max-height: 80px; margin-bottom: 5px; }
+    /* إخفاء المحتوى حتى تسجيل الدخول */
+    #mainContent { display: none; }
+  </style>
+</head>
+<body>
+  <!-- نموذج تسجيل الدخول -->
+  <div class="modal fade" id="loginModal" tabindex="-1" role="dialog" aria-labelledby="loginModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <form id="login-form" class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="loginModalLabel">أرابــيــكــا كـــافـــي</h5>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="login-username">اسم المستخدم</label>
+            <input type="text" class="form-control" id="login-username" placeholder="أدخل اسم المستخدم" required>
+          </div>
+          <div class="form-group">
+            <label for="login-password">كلمة المرور</label>
+            <input type="password" class="form-control" id="login-password" placeholder="أدخل كلمة المرور" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">دخول</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- المحتوى الرئيسي -->
+  <div id="mainContent" class="container">
+    <header class="my-3 d-flex justify-content-between align-items-center">
+      <h1>أرابـــيـــــــــــكـــــــا كـــــــافـــــي</h1>
+      <!-- أضيف زر الخزينة -->
+       <button id="treasury-btn" class="btn btn-info ml-2">الخزينة</button>
+      <button id="logout-btn" class="btn btn-danger">تسجيل خروج</button>
+      
+      
+    </header>
+
+    <!-- قائمة التبويبات -->
+    <ul class="nav nav-tabs" id="mainTabs">
+      <li class="nav-item">
+        <a class="nav-link active" data-toggle="tab" data-feature="sales" href="#sales-tab">المبيعات</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" data-toggle="tab" data-feature="products" href="#products-tab">قائمة الأصناف</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" data-toggle="tab" data-feature="invoices" href="#invoices-tab">قائمة الفواتير</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" data-toggle="tab" data-feature="reports" href="#reports-tab">التقارير</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" data-toggle="tab" data-feature="finance" href="#finance-tab">الإدارة المالية</a>
+      </li>
+      <!-- تبويب خاص بالمدير -->
+      <li class="nav-item" id="login-settings-tab-nav">
+        <a class="nav-link" data-toggle="tab" data-feature="admin" href="#login-settings-tab">إعدادات تسجيل الدخول</a>
+      </li>
+    </ul>
+
+    <div class="tab-content">
+      <!-- تبويب المبيعات -->
+      <div id="sales-tab" class="tab-pane fade show active">
+        <div class="row">
+          <!-- فاتورة البيع (العمود الأيسر) -->
+          <div class="col-md-6">
+            <h2>فاتورة البيع</h2>
+            <table class="table table-bordered" id="invoice-table">
+              <thead>
+                <tr>
+                  <th>الصنف</th>
+                  <th>السعر</th>
+                  <th>الكمية</th>
+                  <th>الإجمالي</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+            <div class="form-group">
+              <label>الخصم:</label>
+              <input type="number" id="discount-input" class="form-control" style="width: 100px;" value="0">
+            </div>
+            <div class="mb-2">
+              <strong>الإجمالي: </strong><span id="total-amount">0</span>
+            </div>
+            <!-- زر إتمام البيع وزر طباعة الفاتورة -->
+            <button id="complete-sale-btn" class="btn btn-success">إتمام البيع</button>
+            <button id="print-invoice-btn" class="btn btn-primary ml-2">طباعة الفاتورة</button>
+          </div>
+          <!-- عرض الأصناف (العمود الأيمن) -->
+          <div class="col-md-6">
+            <h2>الأصناف</h2>
+            <div id="products-container" class="d-flex flex-wrap"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- تبويب قائمة الأصناف -->
+      <div id="products-tab" class="tab-pane fade">
+        <h2>قائمة الأصناف</h2>
+        <!-- حقل بحث لتصفية المنتجات -->
+        <div class="form-group">
+          <input type="text" id="product-search" class="form-control" placeholder="ابحث عن صنف...">
+        </div>
+        <table class="table table-bordered" id="products-table">
+          <thead>
+            <tr>
+              <th>كود الصنف</th>
+              <th>اسم الصنف</th>
+              <th>النوع</th>
+              <th>سعر البيع</th>
+              <th>سعر الشراء</th>
+              <th>الصورة</th>
+              <th>الكمية</th>
+              <th>تعديل</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <button id="add-product-btn" class="btn btn-info">إضافة صنف</button>
+      </div>
+
+      <!-- تبويب قائمة الفواتير -->
+      <div id="invoices-tab" class="tab-pane fade">
+        <h2>قائمة الفواتير</h2>
+        <table class="table table-bordered" id="invoices-table">
+          <thead>
+            <tr>
+              <th>رقم الفاتورة</th>
+              <th>تاريخ البيع</th>
+              <th>القيمة</th>
+              <th>تفاصيل الأصناف</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <button id="export-invoices-btn" class="btn btn-primary mt-2">تصدير قائمة الفواتير إلى Excel</button>
+      </div>
+
+      <!-- تبويب التقارير -->
+      <div id="reports-tab" class="tab-pane fade">
+        <h2>التقارير</h2>
+        <canvas id="salesChart" width="400" height="200"></canvas>
+      </div>
+
+      <!-- تبويب الإدارة المالية -->
+      <div id="finance-tab" class="tab-pane fade">
+        <h2>الإدارة المالية</h2>
+        <h3>المصروفات</h3>
+        <table class="table table-bordered" id="expenses-table">
+          <thead>
+            <tr>
+              <th>التاريخ</th>
+              <th>الوصف</th>
+              <th>المبلغ</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <button id="add-expense-btn" class="btn btn-warning">إضافة مصروف</button>
+        <h3 class="mt-4">الدخل</h3>
+        <table class="table table-bordered" id="income-table">
+          <thead>
+            <tr>
+              <th>التاريخ</th>
+              <th>الوصف</th>
+              <th>المبلغ</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <button id="add-income-btn" class="btn btn-success">إضافة دخل</button>
+        <button id="export-finance-btn" class="btn btn-primary mt-2">تصدير بيانات الإدارة المالية إلى Excel</button>
+      </div>
+
+      <!-- New tab pane for login settings -->
+      <div id="login-settings-tab" class="tab-pane fade">
+        <h2>إعدادات تسجيل دخول المدير</h2>
+        <form id="login-settings-form">
+          <div class="form-group">
+            <label for="new-login-username">اسم المستخدم الجديد</label>
+            <input type="text" class="form-control" id="new-login-username" required>
+          </div>
+          <div class="form-group">
+            <label for="new-login-password">كلمة المرور الجديدة</label>
+            <input type="password" class="form-control" id="new-login-password" required>
+          </div>
+          <button type="submit" class="btn btn-primary">تحديث بيانات الدخول</button>
+        </form>
+        
+        <!-- New User Management Section -->
+        <h3 class="mt-4">إدارة المستخدمين</h3>
+        <table class="table table-bordered" id="users-table">
+          <thead>
+            <tr>
+              <th>اسم المستخدم</th>
+              <th>كلمة المرور</th>
+              <th>الميزات المسموح بها</th>
+              <th>إجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- سيتم تعبئة الجدول بالبيانات -->
+          </tbody>
+        </table>
+        <form id="new-user-form" class="mt-3">
+          <div class="form-group">
+            <label for="new-user-username">اسم المستخدم الجديد</label>
+            <input type="text" class="form-control" id="new-user-username" required>
+          </div>
+          <div class="form-group">
+            <label for="new-user-password">كلمة المرور</label>
+            <input type="password" class="form-control" id="new-user-password" required>
+          </div>
+          <div class="form-group">
+            <label>الميزات المسموح بها</label><br>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="checkbox" id="feature-sales" value="sales">
+              <label class="form-check-label" for="feature-sales">المبيعات</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="checkbox" id="feature-products" value="products">
+              <label class="form-check-label" for="feature-products">قائمة الأصناف</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="checkbox" id="feature-invoices" value="invoices">
+              <label class="form-check-label" for="feature-invoices">الفواتير</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="checkbox" id="feature-reports" value="reports">
+              <label class="form-check-label" for="feature-reports">التقارير</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="checkbox" id="feature-finance" value="finance">
+              <label class="form-check-label" for="feature-finance">الإدارة المالية</label>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-success">إضافة مستخدم</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- نموذج إضافة صنف (Modal) -->
+  <div class="modal fade" id="addProductModal" tabindex="-1" role="dialog" aria-labelledby="addProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <form id="add-product-form" class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addProductModalLabel">إضافة صنف جديد</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="إغلاق">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="product-code">كود الصنف</label>
+            <input type="text" class="form-control" id="product-code" required>
+          </div>
+          <div class="form-group">
+            <label for="product-name">اسم الصنف</label>
+            <input type="text" class="form-control" id="product-name" required>
+          </div>
+          <div class="form-group">
+            <label for="product-type">نوع الصنف</label>
+            <input type="text" class="form-control" id="product-type" required>
+          </div>
+          <div class="form-group">
+            <label for="product-salePrice">سعر البيع</label>
+            <input type="number" step="0.01" class="form-control" id="product-salePrice" required>
+          </div>
+          <div class="form-group">
+            <label for="product-purchasePrice">سعر الشراء</label>
+            <input type="number" step="0.01" class="form-control" id="product-purchasePrice" required>
+          </div>
+          <div class="form-group">
+            <label for="product-image">اختر صورة للمنتج</label>
+            <input type="file" class="form-control-file" id="product-image" accept="image/*">
+          </div>
+          <div class="form-group">
+            <label for="product-quantity">الكمية في المخزن</label>
+            <input type="number" class="form-control" id="product-quantity" value="0" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">إلغاء</button>
+          <button type="submit" class="btn btn-primary">إضافة</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- نموذج تعديل صنف (Modal) -->
+  <div class="modal fade" id="editProductModal" tabindex="-1" role="dialog" aria-labelledby="editProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <form id="edit-product-form" class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editProductModalLabel">تعديل بيانات الصنف</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="إغلاق">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <!-- سيتم تعبئة الحقول بالبيانات الحالية للمنتج -->
+          <div class="form-group">
+            <label for="edit-product-code">كود الصنف</label>
+            <input type="text" class="form-control" id="edit-product-code" readonly>
+          </div>
+          <div class="form-group">
+            <label for="edit-product-name">اسم الصنف</label>
+            <input type="text" class="form-control" id="edit-product-name" required>
+          </div>
+          <div class="form-group">
+            <label for="edit-product-type">نوع الصنف</label>
+            <input type="text" class="form-control" id="edit-product-type" required>
+          </div>
+          <div class="form-group">
+            <label for="edit-product-salePrice">سعر البيع</label>
+            <input type="number" step="0.01" class="form-control" id="edit-product-salePrice" required>
+          </div>
+          <div class="form-group">
+            <label for="edit-product-purchasePrice">سعر الشراء</label>
+            <input type="number" step="0.01" class="form-control" id="edit-product-purchasePrice" required>
+          </div>
+          <div class="form-group">
+            <label for="edit-product-image">تغيير صورة المنتج</label>
+            <input type="file" class="form-control-file" id="edit-product-image" accept="image/*">
+          </div>
+          <div class="form-group">
+            <label for="edit-product-quantity">الكمية في المخزن</label>
+            <input type="number" class="form-control" id="edit-product-quantity" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">إلغاء</button>
+          <button type="submit" class="btn btn-primary">حفظ التعديلات</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- تضمين jQuery، Bootstrap JS ومكتبة SheetJS -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <script>
+    /* ========= بيانات مبدئية ونظام LocalStorage ========= */
+    let products = [
+      { code: 'P001', name: 'قهوة', type: 'مشروبات', salePrice: 2.50, purchasePrice: 1.50, image: 'https://via.placeholder.com/80?text=قهوة', quantity: 10 },
+      { code: 'P002', name: 'شاي', type: 'مشروبات', salePrice: 2.00, purchasePrice: 1.20, image: 'https://via.placeholder.com/80?text=شاي', quantity: 15 },
+      { code: 'P003', name: 'ساندويتش', type: 'أطعمة', salePrice: 5.00, purchasePrice: 3.50, image: 'https://via.placeholder.com/80?text=ساندويتش', quantity: 5 }
+    ];
+    if(localStorage.getItem("products")) {
+      products = JSON.parse(localStorage.getItem("products"));
+    }
+
+    let invoiceItems = []; // فاتورة البيع الحالية
+    let expenses = JSON.parse(localStorage.getItem("expensesData")) || [];
+    let incomeData = JSON.parse(localStorage.getItem("incomeData")) || [];
+
+    /* ========= تحديث وعرض البيانات ========= */
+    function updateInvoice() {
+      const tbody = document.querySelector('#invoice-table tbody');
+      tbody.innerHTML = '';
+      let total = 0;
+      invoiceItems.forEach(item => {
+        const subtotal = item.quantity * item.salePrice;
+        total += subtotal;
+        tbody.innerHTML += `
+          <tr>
+            <td>${item.name}</td>
+            <td>${item.salePrice.toFixed(2)}</td>
+            <td>${item.quantity}</td>
+            <td>${subtotal.toFixed(2)}</td>
+          </tr>
+        `;
+      });
+      const discount = parseFloat(document.getElementById('discount-input').value) || 0;
+      total -= discount;
+      document.getElementById('total-amount').innerText = total.toFixed(2);
+    }
+
+    function loadProducts() {
+      const container = document.getElementById('products-container');
+      container.innerHTML = '';
+      products.forEach(prod => {
+        let card = document.createElement('div');
+        card.className = 'product-card';
+        const imgTag = prod.image ? `<img src="${prod.image}" alt="${prod.name}">` : '';
+        card.innerHTML = `
+          ${imgTag}
+          <div>${prod.name}</div>
+          <div>${prod.salePrice.toFixed(2)}</div>
+        `;
+        card.onclick = () => {
+          let found = invoiceItems.find(item => item.code === prod.code);
+          if(found) { found.quantity++; }
+          else { invoiceItems.push({ ...prod, quantity: 1 }); }
+          updateInvoice();
+        };
+        container.appendChild(card);
+      });
+    }
+
+    function updateProductsTable() {
+      const tbody = document.querySelector('#products-table tbody');
+      tbody.innerHTML = '';
+      products.forEach((prod, index) => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${prod.code}</td>
+            <td>${prod.name}</td>
+            <td>${prod.type}</td>
+            <td>${prod.salePrice.toFixed(2)}</td>
+            <td>${prod.purchasePrice.toFixed(2)}</td>
+            <td>${prod.image ? `<img src="${prod.image}" alt="${prod.name}" style="max-height:50px;">` : '---'}</td>
+            <td>${prod.quantity}</td>
+            <td><button class="btn btn-sm btn-warning edit-btn" data-index="${index}">تعديل</button></td>
+          </tr>
+        `;
+      });
+    }
+
+    function saveProducts() {
+      localStorage.setItem("products", JSON.stringify(products));
+      if(db) updateStore("products", { code: "products", data: products });
+    }
+
+    function updateInvoicesTable() {
+      const tbody = document.querySelector('#invoices-table tbody');
+      tbody.innerHTML = '';
+      let invoices = JSON.parse(localStorage.getItem('invoices')) || [];
+      invoices.forEach(inv => {
+        let itemsDetail = '';
+        inv.items.forEach(i => { itemsDetail += `${i.name} (${i.quantity})<br>`; });
+        tbody.innerHTML += `
+          <tr>
+            <td>${inv.code}</td>
+            <td>${inv.date}</td>
+            <td>${inv.totalValue.toFixed(2)}</td>
+            <td>${itemsDetail}</td>
+          </tr>
+        `;
+      });
+    }
+
+    function updateSalesChart() {
+      // إعداد بيانات بسيطة لرسم بياني يُظهر عدد الفواتير حسب كل تاريخ بيع
+      let invoices = JSON.parse(localStorage.getItem('invoices')) || [];
+      const counts = {};
+      invoices.forEach(inv => {
+        counts[inv.date] = (counts[inv.date] || 0) + 1;
+      });
+      const labels = Object.keys(counts);
+      const data = Object.values(counts);
+      // إذا لم يكن هناك بيانات، استخدم قيم افتراضية
+      if(window.salesChart) { window.salesChart.destroy(); }
+      const ctx = document.getElementById('salesChart').getContext('2d');
+      window.salesChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'عدد الفواتير',
+            data: data,
+            backgroundColor: 'rgba(54, 162, 235, 0.7)'
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            yAxes: [{ ticks: { beginAtZero: true, precision:0 } }]
+          }
+        }
+      });
+    }
+
+    // دوال لتحديث جداول المصروفات والدخل
+    function updateExpensesTable() {
+      const tbody = document.querySelector('#expenses-table tbody');
+      tbody.innerHTML = '';
+      if(expenses.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3" class="text-center">لا توجد بيانات</td></tr>`;
+      } else {
+        expenses.forEach(exp => {
+          tbody.innerHTML += `
+            <tr>
+              <td>${exp.date}</td>
+              <td>${exp.description}</td>
+              <td>${exp.amount.toFixed(2)}</td>
+            </tr>
+          `;
+        });
+      }
+    }
+
+    function updateIncomeTable() {
+      const tbody = document.querySelector('#income-table tbody');
+      tbody.innerHTML = '';
+      if(incomeData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3" class="text-center">لا توجد بيانات</td></tr>`;
+      } else {
+        incomeData.forEach(inc => {
+          tbody.innerHTML += `
+            <tr>
+              <td>${inc.date}</td>
+              <td>${inc.description}</td>
+              <td>${inc.amount.toFixed(2)}</td>
+            </tr>
+          `;
+        });
+      }
+    }
+
+    /* ========= الأحداث ========= */
+    // نظام تسجيل الدخول
+    document.getElementById('login-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value.trim();
+      let adminCred = JSON.parse(localStorage.getItem("loginCredentials"));
+      if(username === adminCred.username && password === adminCred.password) {
+        localStorage.setItem("loggedIn", "true");
+        localStorage.setItem("loggedInUsername", username);
+        localStorage.removeItem("loggedInFeatures");
+        $('#loginModal').modal('hide');
+        document.getElementById('mainContent').style.display = 'block';
+        return;
+      }
+      let users = JSON.parse(localStorage.getItem("users")) || [];
+      const user = users.find(u => u.username === username && u.password === password);
+      if(user) {
+        localStorage.setItem("loggedIn", "true");
+        localStorage.setItem("loggedInUsername", username);
+        localStorage.setItem("loggedInFeatures", JSON.stringify(user.features));
+        $('#loginModal').modal('hide');
+        document.getElementById('mainContent').style.display = 'block';
+        return;
+      }
+      alert('بيانات الدخول غير صحيحة.');
+    });
+
+    // تسجيل الخروج
+    document.getElementById('logout-btn').addEventListener('click', function() {
+      localStorage.removeItem("loggedIn");
+      location.reload();
+    });
+
+    // عند تحميل الصفحة، إذا لم يكن المستخدم مسجلاً يدخل يظهر نموذج تسجيل الدخول
+    window.onload = function() {
+      if(localStorage.getItem("loggedIn") !== "true") {
+        $('#loginModal').modal('show');
+      } else {
+        document.getElementById('mainContent').style.display = 'block';
+      }
+      const loggedInUser = localStorage.getItem("loggedInUsername");
+      const adminCred = JSON.parse(localStorage.getItem("loginCredentials"));
+      let allowedFeatures = ["sales", "products", "invoices", "reports", "finance"]; // افتراضيات المدير
+      if(loggedInUser !== adminCred.username) {
+        allowedFeatures = JSON.parse(localStorage.getItem("loggedInFeatures") || "[]");
+      }
+      // تصفية التبويبات بناءً على الميزات المسموح بها
+      document.querySelectorAll('#mainTabs a[data-feature]').forEach(tab => {
+        const feature = tab.getAttribute('data-feature');
+        if(feature === "admin") {
+          if(loggedInUser !== adminCred.username) {
+            tab.parentElement.style.display = 'none';
+          }
+        } else if(!allowedFeatures.includes(feature)) {
+          tab.parentElement.style.display = 'none';
+        }
+      });
+      
+      loadProducts();
+      updateProductsTable();
+      updateInvoice();
+      updateInvoicesTable();
+      updateSalesChart();
+      // تحديث جدول الدخل والمصروفات تلقائياً
+      updateExpensesTable();
+      updateIncomeTable();
+      openDatabase();
+    };
+
+    // "إتمام البيع"
+    document.getElementById('complete-sale-btn').addEventListener('click', function() {
+      if (invoiceItems.length === 0) {
+        alert('الفاتورة فارغة!');
+        return;
+      }
+      const invoiceCode = 'INV' + Date.now();
+      const saleDate = new Date().toLocaleDateString();
+      let total = parseFloat(document.getElementById('total-amount').innerText) || 0;
+      const invoiceData = {
+        code: invoiceCode,
+        date: saleDate,
+        items: invoiceItems.map(item => ({
+          code: item.code,
+          name: item.name,
+          quantity: item.quantity,
+          salePrice: item.salePrice
+        })),
+        totalValue: total
+      };
+      let invoices = JSON.parse(localStorage.getItem('invoices')) || [];
+      invoices.push(invoiceData);
+      localStorage.setItem('invoices', JSON.stringify(invoices));
+      alert(
+        'تم إتمام البيع!\n' +
+        'رقم الفاتورة: ' + invoiceCode + "\n" +
+        'تاريخ البيع: ' + saleDate + "\n" +
+        'القيمة: ' + total.toFixed(2)
+      );
+      invoiceItems = [];
+      updateInvoice();
+      updateInvoicesTable();
+      updateSalesChart();
+    });
+
+    // "طباعة الفاتورة"
+    document.getElementById('print-invoice-btn').addEventListener('click', function() {
+      let printContents = '<h2>فاتورة البيع</h2>';
+      printContents += document.getElementById('invoice-table').outerHTML;
+      printContents += `<p><strong>الإجمالي: </strong>${document.getElementById('total-amount').innerText}</p>`;
+      let newWin = window.open('', '_blank');
+      newWin.document.open();
+      newWin.document.write(`
+        <html>
+          <head>
+            <title>طباعة الفاتورة</title>
+            <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+            <style>
+              body { direction: rtl; margin:20px; }
+              table { width: 100%; border-collapse: collapse; }
+              table, th, td { border: 1px solid #ccc; }
+              th, td { padding: 8px; text-align: center; }
+            </style>
+          </head>
+          <body>
+            ${printContents}
+          </body>
+        </html>
+      `);
+      newWin.document.close();
+      newWin.focus();
+      newWin.print();
+      newWin.close();
+    });
+
+    // "تصدير قائمة الفواتير إلى Excel"
+    document.getElementById('export-invoices-btn').addEventListener('click', function() {
+      let invoices = JSON.parse(localStorage.getItem('invoices')) || [];
+      let ws_data = [['رقم الفاتورة', 'تاريخ البيع', 'القيمة', 'تفاصيل الأصناف']];
+      invoices.forEach(inv => {
+        let details = '';
+        inv.items.forEach(i => details += `${i.name} (${i.quantity}) `);
+        ws_data.push([inv.code, inv.date, inv.totalValue, details]);
+      });
+      let ws = XLSX.utils.aoa_to_sheet(ws_data);
+      let wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "الفواتير");
+      XLSX.writeFile(wb, "Invoices.xlsx");
+    });
+
+    // "تصدير بيانات الإدارة المالية إلى Excel"
+    document.getElementById('export-finance-btn').addEventListener('click', function() {
+      let expenseSheet = XLSX.utils.table_to_sheet(document.getElementById('expenses-table'));
+      let incomeSheet = XLSX.utils.table_to_sheet(document.getElementById('income-table'));
+      let wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, expenseSheet, "المصروفات");
+      XLSX.utils.book_append_sheet(wb, incomeSheet, "الدخل");
+      XLSX.writeFile(wb, "FinanceData.xlsx");
+    });
+
+    // "إضافة مصروف"
+    document.getElementById('add-expense-btn').addEventListener('click', function() {
+      const description = prompt('أدخل وصف المصروف:');
+      const amount = parseFloat(prompt('أدخل مبلغ المصروف:'));
+      if(description && !isNaN(amount)) {
+        const expenseItem = {
+          date: new Date().toLocaleDateString(),
+          description: description,
+          amount: amount
+        };
+        expenses.push(expenseItem);
+        localStorage.setItem("expensesData", JSON.stringify(expenses));
+        updateExpensesTable();
+      } else { 
+        alert('يرجى إدخال بيانات صحيحة.'); 
+      }
+    });
+
+    // "إضافة دخل"
+    document.getElementById('add-income-btn').addEventListener('click', function() {
+      const description = prompt('أدخل وصف الدخل:');
+      const amount = parseFloat(prompt('أدخل مبلغ الدخل:'));
+      if(description && !isNaN(amount)) {
+        const incomeItem = {
+          date: new Date().toLocaleDateString(),
+          description: description,
+          amount: amount
+        };
+        incomeData.push(incomeItem);
+        localStorage.setItem("incomeData", JSON.stringify(incomeData));
+        updateIncomeTable();
+      } else { 
+        alert('يرجى إدخال بيانات صحيحة.');
+      }
+    });
+
+    // البحث في قائمة الأصناف
+    document.getElementById('product-search').addEventListener('input', function() {
+      const searchTerm = this.value.toLowerCase();
+      const rows = document.querySelectorAll('#products-table tbody tr');
+      rows.forEach(row => {
+        const name = row.cells[1].innerText.toLowerCase();
+        if(name.indexOf(searchTerm) > -1)
+          row.style.display = '';
+        else
+          row.style.display = 'none';
+      });
+    });
+
+    /* ========= نماذج إضافة وتعديل المنتجات ========= */
+    // فتح نموذج إضافة صنف
+    document.getElementById('add-product-btn').addEventListener('click', function() {
+      $('#addProductModal').modal('show');
+    });
+    // معالجة نموذج إضافة صنف
+    document.getElementById('add-product-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const code = document.getElementById('product-code').value.trim();
+      const name = document.getElementById('product-name').value.trim();
+      const type = document.getElementById('product-type').value.trim();
+      const salePrice = parseFloat(document.getElementById('product-salePrice').value);
+      const purchasePrice = parseFloat(document.getElementById('product-purchasePrice').value);
+      const fileInput = document.getElementById('product-image');
+      const quantity = parseInt(document.getElementById('product-quantity').value);
+      if(fileInput.files && fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          const imageData = evt.target.result;
+          addProduct(code, name, type, salePrice, purchasePrice, imageData, quantity);
+        };
+        reader.readAsDataURL(fileInput.files[0]);
+      } else {
+        addProduct(code, name, type, salePrice, purchasePrice, '', quantity);
+      }
+    });
+
+    function addProduct(code, name, type, salePrice, purchasePrice, imageData, quantity) {
+      if(code && name && type && !isNaN(salePrice) && !isNaN(purchasePrice)) {
+        products.push({ code, name, type, salePrice, purchasePrice, image: imageData, quantity: quantity });
+        updateProductsTable();
+        loadProducts();
+        saveProducts();
+        $('#addProductModal').modal('hide');
+        document.getElementById('add-product-form').reset();
+      } else { alert('يرجى إدخال بيانات صحيحة.'); }
+    }
+
+    // عملية تعديل المنتج
+    document.addEventListener('click', function(e) {
+      if(e.target && e.target.classList.contains('edit-btn')) {
+        const index = e.target.getAttribute('data-index');
+        const prod = products[index];
+        document.getElementById('edit-product-code').value = prod.code;
+        document.getElementById('edit-product-name').value = prod.name;
+        document.getElementById('edit-product-type').value = prod.type;
+        document.getElementById('edit-product-salePrice').value = prod.salePrice;
+        document.getElementById('edit-product-purchasePrice').value = prod.purchasePrice;
+        document.getElementById('edit-product-quantity').value = prod.quantity; // ملء حقل الكمية
+        $('#editProductModal').data('index', index).modal('show');
+      }
+    });
+
+    // معالجة نموذج تعديل المنتج
+    document.getElementById('edit-product-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const index = $('#editProductModal').data('index');
+      products[index].name = document.getElementById('edit-product-name').value.trim();
+      products[index].type = document.getElementById('edit-product-type').value.trim();
+      products[index].salePrice = parseFloat(document.getElementById('edit-product-salePrice').value);
+      products[index].purchasePrice = parseFloat(document.getElementById('edit-product-purchasePrice').value);
+      products[index].quantity = parseInt(document.getElementById('edit-product-quantity').value); // تحديث الكمية
+      const fileInput = document.getElementById('edit-product-image');
+      if(fileInput.files && fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          products[index].image = evt.target.result;
+          finishEdit();
+        };
+        reader.readAsDataURL(fileInput.files[0]);
+      } else {
+        finishEdit();
+      }
+    });
+
+    function finishEdit() {
+      updateProductsTable();
+      loadProducts();
+      saveProducts();
+      $('#editProductModal').modal('hide');
+      document.getElementById('edit-product-form').reset();
+    }
+    
+    // إضافة مستمع حدث لزر "الخزينة"
+    document.getElementById('treasury-btn').addEventListener('click', function() {
+      let totalIncome = 0;
+      document.querySelectorAll('#income-table tbody tr').forEach(row => {
+        totalIncome += parseFloat(row.cells[2].innerText) || 0;
+      });
+      
+      let totalExpense = 0;
+      document.querySelectorAll('#expenses-table tbody tr').forEach(row => {
+        totalExpense += parseFloat(row.cells[2].innerText) || 0;
+      });
+      
+      let totalSales = 0;
+      let invoices = JSON.parse(localStorage.getItem('invoices')) || [];
+      invoices.forEach(inv => {
+        totalSales += inv.totalValue;
+      });
+      
+      const treasury = totalSales + totalIncome - totalExpense;
+      alert('القيمة الإجمالية للخزينة: ' + treasury.toFixed(2));
+    });
+
+    // ===== IndexedDB: إنشاء قاعدة البيانات والمساعدات =====
+    let db;
+    function openDatabase() {
+      const request = indexedDB.open("CafeDB", 1);
+      request.onupgradeneeded = function(event) {
+        db = event.target.result;
+        if(!db.objectStoreNames.contains("products"))
+          db.createObjectStore("products", { keyPath: "code" });
+        if(!db.objectStoreNames.contains("invoices"))
+          db.createObjectStore("invoices", { keyPath: "code" });
+        if(!db.objectStoreNames.contains("expenses"))
+          db.createObjectStore("expenses", { autoIncrement: true });
+        if(!db.objectStoreNames.contains("income"))
+          db.createObjectStore("income", { autoIncrement: true });
+      };
+      request.onsuccess = function(event) {
+        db = event.target.result;
+        // Call functions to load financial data from IndexedDB
+        loadExpensesFromDB();
+        loadIncomeFromDB();
+      };
+      request.onerror = function(event) {
+        console.error("IndexedDB error:", event.target.errorCode);
+      };
+    }
+
+    function updateStore(storeName, data) {
+      if(!db) return;
+      const transaction = db.transaction([storeName], "readwrite");
+      const store = transaction.objectStore(storeName);
+      if(storeName === "products" || storeName === "invoices") {
+        store.put(data);
+      } else { 
+        store.clear();
+        data.forEach(item => store.add(item));
+      }
+    }
+
+    function saveAllData() {
+      // يتم حفظ المنتجات والفواتير كمجموعة مميزة لتسهيل الإسترجاع
+      updateStore("products", { code: "products", data: products });
+      updateStore("invoices", { code: "invoices", data: JSON.parse(localStorage.getItem("invoices")) || [] });
+      updateStore("expenses", expenses);
+      updateStore("income", incomeData);
+    }
+
+    // Add functions to load Expenses and Income from the database
+    function loadExpensesFromDB() {
+      const transaction = db.transaction("expenses", "readonly");
+      const store = transaction.objectStore("expenses");
+      const request = store.getAll();
+      request.onsuccess = function() {
+        expenses = request.result;
+        localStorage.setItem("expensesData", JSON.stringify(expenses));
+        updateExpensesTable();
+      };
+    }
+
+    function loadIncomeFromDB() {
+      const transaction = db.transaction("income", "readonly");
+      const store = transaction.objectStore("income");
+      const request = store.getAll();
+      request.onsuccess = function() {
+        incomeData = request.result;
+        localStorage.setItem("incomeData", JSON.stringify(incomeData));
+        updateIncomeTable();
+      };
+    }
+
+    // حفظ جميع البيانات عند مغادرة الصفحة
+    window.addEventListener("beforeunload", function() {
+      saveAllData();
+    });
+
+    // تعيين بيانات الدخول الافتراضية إذا لم تكن موجودة
+    if(!localStorage.getItem("loginCredentials")) {
+      localStorage.setItem("loginCredentials", JSON.stringify({username: "admin", password: "1234"}));
+    }
+
+    // مستمع الحدث لنموذج إعدادات تسجيل الدخول
+    document.getElementById('login-settings-form').addEventListener('submit', function(e){
+      e.preventDefault();
+      const newUsername = document.getElementById('new-login-username').value.trim();
+      const newPassword = document.getElementById('new-login-password').value.trim();
+      if(newUsername && newPassword) {
+        localStorage.setItem("loginCredentials", JSON.stringify({username: newUsername, password: newPassword}));
+        alert('تم تحديث بيانات الدخول. يرجى إعادة تسجيل الدخول.');
+        localStorage.removeItem("loggedIn");
+        localStorage.removeItem("loggedInUsername");
+        location.reload();
+      } else {
+        alert('يرجى إدخال بيانات صحيحة.');
+      }
+    });
+
+    // Initialize users in localStorage if not present
+    if(!localStorage.getItem("users")) {
+      localStorage.setItem("users", JSON.stringify([]));
+    }
+    
+    function loadUsers() {
+      const users = JSON.parse(localStorage.getItem("users")) || [];
+      const tbody = document.querySelector("#users-table tbody");
+      tbody.innerHTML = "";
+      users.forEach((user, index) => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${user.username}</td>
+            <td>${user.password}</td>
+            <td>${user.features.join(", ")}</td>
+            <td>
+              <button class="btn btn-sm btn-warning" onclick="editUser(${index})">تعديل</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteUser(${index})">حذف</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+    
+    document.getElementById("new-user-form").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const username = document.getElementById("new-user-username").value.trim();
+      const password = document.getElementById("new-user-password").value.trim();
+      const features = [];
+      if(document.getElementById("feature-sales").checked) features.push("sales");
+      if(document.getElementById("feature-products").checked) features.push("products");
+      if(document.getElementById("feature-invoices").checked) features.push("invoices");
+      if(document.getElementById("feature-reports").checked) features.push("reports");
+      if(document.getElementById("feature-finance").checked) features.push("finance");
+      if(username && password) {
+        const users = JSON.parse(localStorage.getItem("users")) || [];
+        users.push({ username, password, features });
+        localStorage.setItem("users", JSON.stringify(users));
+        loadUsers();
+        this.reset();
+      } else {
+        alert("يرجى إدخال بيانات المستخدم بشكل صحيح.");
+      }
+    });
+    
+    function editUser(index) {
+      const users = JSON.parse(localStorage.getItem("users")) || [];
+      const user = users[index];
+      const newPassword = prompt("أدخل كلمة المرور الجديدة:", user.password);
+      if(newPassword !== null) {
+        const newFeatures = prompt("أدخل الميزات المسموح بها مفصولة بفاصلة (مثال: sales,products):", user.features.join(","));
+        user.password = newPassword.trim();
+        user.features = newFeatures ? newFeatures.split(",").map(f => f.trim()) : [];
+        users[index] = user;
+        localStorage.setItem("users", JSON.stringify(users));
+        loadUsers();
+      }
+    }
+    
+    function deleteUser(index) {
+      if(confirm("هل أنت متأكد من حذف هذا المستخدم؟")) {
+        const users = JSON.parse(localStorage.getItem("users")) || [];
+        users.splice(index, 1);
+        localStorage.setItem("users", JSON.stringify(users));
+        loadUsers();
+      }
+    }
+    
+    // Load users when admin tab is opened
+    document.addEventListener("DOMContentLoaded", function() {
+      loadUsers();
+    });
+  </script>
+</body>
+</html>
